@@ -39,6 +39,7 @@ class Nodelet : public nodelet::Nodelet {
 
   ///MOJ KOD 
   geometry_msgs::PoseStamped goal_pose;
+  geometry_msgs::PoseStamped drone_pose;
 
   // NOTE just for debug
   bool debug_ = false;
@@ -80,20 +81,42 @@ class Nodelet : public nodelet::Nodelet {
 
   std::atomic_bool triger_received_ = ATOMIC_VAR_INIT(false);
 
-  void triger_callback(const geometry_msgs::PoseStampedConstPtr& msgPtr) {
-    goal_ << msgPtr->pose.position.x, msgPtr->pose.position.y, 1.0;
+  void triger_callback(const geometry_msgs::PoseArray::ConstPtr& msg) {
+    if (msg->poses.size() < 2) {
+        ROS_WARN("Received less than 2 poses in /triger topic!");
+        return;
+    }
+
     triger_received_ = true;
-    //MOJ KOD
-    goal_pose.pose.position.x = msgPtr->pose.position.x;
-    goal_pose.pose.position.y = msgPtr->pose.position.y;
-    goal_pose.pose.position.z = msgPtr->pose.position.z;
 
-    goal_pose.pose.orientation.x = msgPtr->pose.orientation.x;
-    goal_pose.pose.orientation.y = msgPtr->pose.orientation.y;
-    goal_pose.pose.orientation.z = msgPtr->pose.orientation.z;
-    goal_pose.pose.orientation.w = msgPtr->pose.orientation.w;
+    geometry_msgs::Pose goal, drone;
+    goal = msg->poses[0];  
+    drone = msg->poses[1];  
 
-  }
+    goal_pose.header = msg->header;
+    drone_pose.header = msg->header;
+
+    goal_pose.pose.position.x = goal.position.x;
+    goal_pose.pose.position.y = goal.position.y;
+    goal_pose.pose.position.z = goal.position.z;
+    goal_pose.pose.orientation.x = goal.orientation.x;
+    goal_pose.pose.orientation.y = goal.orientation.y;
+    goal_pose.pose.orientation.z = goal.orientation.z;
+    goal_pose.pose.orientation.w = goal.orientation.w;
+
+    drone_pose.pose.position.x = drone.position.x;
+    drone_pose.pose.position.y = drone.position.y;
+    drone_pose.pose.position.z = drone.position.z;
+    drone_pose.pose.orientation.x = drone.orientation.x;
+    drone_pose.pose.orientation.y = drone.orientation.y;
+    drone_pose.pose.orientation.z = drone.orientation.z;
+    drone_pose.pose.orientation.w = drone.orientation.w;
+
+    ROS_INFO("Received Goal Pose: [%.2f, %.2f, %.2f]", 
+             goal_pose.pose.position.x, goal_pose.pose.position.y, goal_pose.pose.position.z);
+    ROS_INFO("Received Init Pose: [%.2f, %.2f, %.2f]", 
+             drone_pose.pose.position.x, drone_pose.pose.position.y, drone_pose.pose.position.z);
+}
 
   void debug_timer_callback(const ros::TimerEvent& event) {
     if (!triger_received_) {
@@ -108,9 +131,9 @@ class Nodelet : public nodelet::Nodelet {
     Eigen::Quaterniond land_q(1, 0, 0, 0);
 
     iniState.setZero();
-    iniState.col(0).x() = 0.0;
-    iniState.col(0).y() = 0.0;
-    iniState.col(0).z() = 2.0;
+    iniState.col(0).x() = drone_pose.pose.position.x;
+    iniState.col(0).y() = drone_pose.pose.position.y;
+    iniState.col(0).z() = drone_pose.pose.position.z;
     iniState.col(1) = perching_v_;
     //target_p = perching_p_;
     target_p << goal_pose.pose.position.x,
@@ -206,7 +229,6 @@ class Nodelet : public nodelet::Nodelet {
     double totalDur = traj.getTotalDuration(); 
     std::cout << "TOTAL DUUR " << totalDur << "  " << dt << std::endl;
   
-
     //MOJ NOVI KOD!!!!!!!!!!!
 
     Eigen::Matrix3Xd positions = traj.getPositions();
@@ -425,7 +447,9 @@ class Nodelet : public nodelet::Nodelet {
 
     plan_timer_ = nh.createTimer(ros::Duration(1.0 / plan_hz_), &Nodelet::debug_timer_callback, this);
 
-    triger_sub_ = nh.subscribe<geometry_msgs::PoseStamped>("triger", 10, &Nodelet::triger_callback, this, ros::TransportHints().tcpNoDelay());
+    triger_sub_ = nh.subscribe<geometry_msgs::PoseArray>(
+    "triger/array", 10, &Nodelet::triger_callback, this, ros::TransportHints().tcpNoDelay());
+
     pose_array_pub = nh.advertise<geometry_msgs::PoseArray>("/fastp_trajectory", 10);
     ROS_WARN("Planning node initialized!");
   }
