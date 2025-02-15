@@ -147,10 +147,10 @@ class Nodelet : public nodelet::Nodelet {
 
     //Eigen::Vector3d axis = perching_axis_.normalized(); MOJ KOD !!!!
     Eigen::Quaterniond quaternion(
-        goal_pose.pose.orientation.w,
-        goal_pose.pose.orientation.x,
-        goal_pose.pose.orientation.y,
-        goal_pose.pose.orientation.z
+        1,
+        0,
+        0,
+        0
     );
 
     quaternion.normalize();
@@ -227,14 +227,16 @@ class Nodelet : public nodelet::Nodelet {
     double max_omega = 0;
     //MOJ KOD
     double totalDur = traj.getTotalDuration(); 
-    std::cout << "TOTAL DUUR " << totalDur << "  " << dt << std::endl;
+    std::cout << "TOTAL DURATION " << totalDur << "  " << dt << std::endl;
   
     //MOJ NOVI KOD!!!!!!!!!!!
 
     Eigen::Matrix3Xd positions = traj.getPositions();
-    Eigen::Vector3d velocitiez = traj.getVel(totalDur-dt);
-    std::cout << "Velocity: " << velocitiez.transpose() << std::endl;
+    Eigen::Vector3d lastVelocity = traj.getVel(totalDur);
+    std::cout << "Last velocity: " << lastVelocity.transpose() << std::endl;
 
+    Eigen::Vector3d lastAcceleration = traj.getAcc(totalDur);
+    std::cout << "Last acceleration: " << lastAcceleration.transpose() << std::endl;
     // Print the dimensions of the positions matrix
     std::cout << "Matrix dimensions: " << positions.rows() << "x" << positions.cols() << std::endl;
 

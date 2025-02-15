@@ -64,12 +64,12 @@
       <param name="perching_vz" value="0.0"/>
 
       <param name="perching_axis_x" value="0.0"/>
-      <param name="perching_axis_y" value="0.5"/>
-      <param name="perching_axis_z" value="0.5"/>
+      <param name="perching_axis_y" value="0.0"/>
+      <param name="perching_axis_z" value="1.0"/>
       <!-- <param name="perching_theta" value="-0.0"/> -->
       <!-- <param name="perching_theta" value="0.5"/> -->
       <!-- <param name="perching_theta" value="0.5"/> -->
-      <param name="perching_theta" value="-1.0708"/>
+      <param name="perching_theta" value="0.0"/>
       <!-- <param name="perching_theta" value="-3"/> -->
 
       <param name="replan" value="false"/>
